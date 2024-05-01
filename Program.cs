@@ -1,39 +1,33 @@
 ﻿using System.Diagnostics;
 
-// Configura o tamanho máximo do ThreadPool com 10000 threads de trabalho e 10000 threads de conclusão
-ThreadPool.SetMaxThreads(10000, 10000);
+ThreadPool.SetMinThreads(50, 50); // Define o número mínimo de threads no ThreadPool como 50.
 
-// Método assíncrono que simula uma operação demorada
-async Task TarefaAsync(int item)
+async Task TestAsync(int item) // Declara uma função assíncrona chamada TestAsync que recebe um parâmetro item.
 {
-    // Imprime na tela o ID da thread atual e o número do item sendo processado
-    Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} is processing item {item}");
-
-    // Simula uma operação de espera de 1 segundo
-    await Task.Delay(1000);
+    // Abre um arquivo para escrita de forma assíncrona. O caminho do arquivo é construído com base no valor do parâmetro item.
+    using (var stream = new StreamWriter($"./files/file_{item}.txt"))
+    {
+        // Escreve no arquivo de forma assíncrona. O conteúdo é uma string que inclui o valor do parâmetro item.
+        await stream.WriteAsync($"Conteúdo do arquivo {item}");
+    }
 }
 
-// Cria um cronômetro para medir o tempo de execução
-Stopwatch stopwatch = Stopwatch.StartNew();
+Stopwatch stopwatch = Stopwatch.StartNew(); // Cria e inicia um cronômetro para medir o tempo de execução.
 
-// Lista para armazenar as tarefas
-List<Task> tasks = new List<Task>();
+List<Task> tasks = new List<Task>(); // Cria uma lista para armazenar as tarefas assíncronas.
 
-// Loop para criar e iniciar 1 milhão de tarefas
-for (int i = 0; i < 1_000_000; i++)
+for (int i = 0; i < 1000; i++) // Loop de 0 a 999.
 {
-    // Captura o valor do índice para cada iteração
-    int currentItem = i;
+    int currentItem = i; // Armazena o valor do índice atual em uma variável temporária.
 
-    // Inicia uma nova tarefa para processar o item atual
-    tasks.Add(Task.Run(() => TarefaAsync(currentItem)));
+    // Adiciona uma tarefa assíncrona à lista de tarefas. Cada tarefa chama a função TestAsync com o valor do índice atual como argumento.
+    tasks.Add(TestAsync(currentItem));
 }
 
-// Aguarda a conclusão de todas as tarefas
+// Aguarda a conclusão de todas as tarefas na lista.
 await Task.WhenAll(tasks);
 
-// Para o cronômetro
-stopwatch.Stop();
+stopwatch.Stop(); // Para o cronômetro.
 
-// Imprime na tela o tempo total decorrido
+// Exibe o tempo total decorrido durante a execução das tarefas.
 Console.WriteLine($"A operação levou {stopwatch.ElapsedMilliseconds} ms.");
